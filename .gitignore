@@ -1,0 +1,7 @@
+/*
+*.pyc
+!.gitignore
+!ddk.py
+!ddkcore
+!dist
+!README.md
