@@ -1,7 +1,5 @@
 # ddk
 
-ddk  is a tool to manage of environment for projects
-
 ddk (Docker Development Kit) is a tool that helps manage environment dependencies for projects that use docker containers.
 
 
