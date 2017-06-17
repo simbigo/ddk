@@ -29,6 +29,12 @@ $ ddk compose --up
 
 Now you can access the application in your browser at http://hello.ddk.
 
+### Building from source
+
+The latest version of ddk is located in dist directory.
+
+If you want to build the ddk script yourself, just run make.py and specify the build version.
+
 ### Configuration
 
 To start using ddk you need is a ddk.json file. This file describes the basic configurations of the tool. If this file is not in the current directory, the script will try to find the configuration in the parent directories.
