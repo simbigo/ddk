@@ -22,9 +22,9 @@ echo 127.0.0.1   hello.ddk  >> /etc/hosts
 Run demo application:
 
 ```
-$ ./ddk init
-$ ./ddk project get hello
-$ ./ddk compose --up
+$ ddk init
+$ ddk project get hello
+$ ddk compose --up
 ```
 
 Now you can access the application in your browser at http://hello.ddk.
@@ -37,7 +37,7 @@ Run init command to create the file of configuration. It takes a snapshot of the
 
 Available parameters:
 
-| Параметр                          | Значение                    | Описание
+| Parameter                         | Value                       | Description
 | --------------------------------- | --------------------------- | -------------
 | ddk-server.url                    |                             | The server url to get for updates
 | ddk-server.basic-auth.password    |                             | Username for Basic-Auth
