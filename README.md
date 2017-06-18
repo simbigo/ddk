@@ -156,6 +156,16 @@ If it is necessary to extend a configuration of any package, you can do it indic
 }
 ```
 
+To use an original image from docker library, you can specify the package name with ```dl:``` prefix.
+
+```json
+{
+    "packages": [
+        "dl:redis"
+    ]
+}
+```
+
 **Variables**
 
 The configuration supports using of variables. For more information see "Variable" section.

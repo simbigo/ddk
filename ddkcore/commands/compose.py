@@ -3,6 +3,7 @@ import os
 
 
 class ComposeCommand(Command):
+    docker_library_prefix = "dl:"
 
     def __merge_configs(self, first_config, second_config):
         result_config = first_config.copy()
@@ -36,6 +37,16 @@ class ComposeCommand(Command):
 
     def get_name(self):
         return 'compose'
+
+    def normalize_package_name(self, package):
+        if self.package_is_from_docker_library(package):
+            prefix_len = len(self.docker_library_prefix)
+            package = package[prefix_len:]
+
+        return package
+
+    def package_is_from_docker_library(self, package):
+        return package.startswith(self.docker_library_prefix)
 
     def run(self, args, terminal):
         kit = self.get_kit()
@@ -89,7 +100,7 @@ class ComposeCommand(Command):
                 terminal.output("  Not found: " + kit.get_full_path(project_config_path), terminal.VERBOSITY_DEBUG)
 
         for package in required_packages.keys():
-            if not kit.package_is_installed(package):
+            if not kit.package_is_installed(package) and not self.package_is_from_docker_library(package):
                 terminal.output("Installing " + package + "...", terminal.VERBOSITY_VERBOSE)
                 kit.install_package(package)
 
@@ -98,13 +109,25 @@ class ComposeCommand(Command):
         yml += "services:\n"
         indent = '    '
         for package in sorted(required_packages.keys()):
-            yml += indent + package + ":\n"
+            normalized_package_name = self.normalize_package_name(package)
+            service_name = str.replace(str(normalized_package_name), ":", "-").replace("/", "_")
+
+            yml += indent + service_name + ":\n"
             package_dir = config["packages-dir"] + "/" + package
             package_config_path = package_dir + "/ddk.json"
-            terminal.output("Reading " + kit.get_full_path(package_config_path), terminal.VERBOSITY_DEBUG)
-            package_config = kit.read_configuration_file(package_config_path)
+
+            if self.package_is_from_docker_library(package):
+                package_config = {
+                    "container_name": service_name + ".ddk",
+                    "image": normalized_package_name
+                }
+            else:
+                terminal.output("Reading " + kit.get_full_path(package_config_path), terminal.VERBOSITY_DEBUG)
+                package_config = kit.read_configuration_file(package_config_path)
+
             package_config = self.__merge_configs(package_config, required_packages[package])
             package_config["networks"] = [config["network-name"]]
+
             for attribute in sorted(package_config.keys()):
                 if attribute.startswith("ddk-"):
                     continue
