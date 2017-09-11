@@ -38,6 +38,40 @@ class ComposeCommand(Command):
     def get_name(self):
         return 'compose'
 
+    def make_config_value(self, value, variables):
+        kit = self.get_kit()
+        if type(value) is list:
+            new_value = []
+            for item_value in value:
+                new_value.append(kit.resolve_variables(item_value, **variables))
+            value = new_value
+        elif type(value) is dict:
+            pass
+        else:
+            value = kit.resolve_variables(value, **variables)
+        return value
+
+    def make_value(self, value, indent, indent_count, variables):
+        kit = self.get_kit()
+        ret = ""
+        if type(value) is list:
+            value = list(set(value))  # remove duplicates
+            for item in sorted(value):
+                item = kit.resolve_variables(item, **variables)
+                ret += "\n" + (indent_count * indent) + "- " + item
+            ret += "\n"
+        elif type(value) is dict:
+            for attribute in sorted(value.keys()):
+                ret += "\n" + (indent_count * indent) + attribute + ":"
+                if type(value[attribute] is str):
+                    ret += " "
+                ret += self.make_value(value[attribute], indent, indent_count + 1, variables)
+        else:
+            value = kit.resolve_variables(value, **variables)
+            ret += value + "\n"
+
+        return ret
+
     def normalize_package_name(self, package):
         if self.package_is_from_docker_library(package):
             prefix_len = len(self.docker_library_prefix)
@@ -83,13 +117,7 @@ class ComposeCommand(Command):
                                 "project_path": kit.get_full_path(config["projects-base-dir"] + "/" + project),
                                 "project_dir": project,
                             }
-                            if type(value) is list:
-                                new_value = []
-                                for item_value in value:
-                                    new_value.append(kit.resolve_variables(item_value, **variables))
-                                value = new_value
-                            else:
-                                value = kit.resolve_variables(value, **variables)
+                            value = self.make_config_value(value, variables)
                             package_config[attribute] = value
 
                         required_packages[package_name] = self.__merge_configs(
@@ -126,7 +154,9 @@ class ComposeCommand(Command):
                 package_config = kit.read_configuration_file(package_config_path)
 
             package_config = self.__merge_configs(package_config, required_packages[package])
-            package_config["networks"] = [config["network-name"]]
+
+            if "networks" not in package_config:
+                package_config["networks"] = [config["network-name"]]
 
             for attribute in sorted(package_config.keys()):
                 if attribute.startswith("ddk-"):
@@ -135,15 +165,7 @@ class ComposeCommand(Command):
                 value = package_config[attribute]
                 yml += (2 * indent) + attribute + ": "
                 variables = {"package_path": kit.get_full_path(package_dir)}
-                if type(value) is list:
-                    value = list(set(value))  # remove duplicates
-                    for item in sorted(value):
-                        item = kit.resolve_variables(item, **variables)
-                        yml += "\n" + (3 * indent) + "- " + item
-                    yml += "\n"
-                else:
-                    value = kit.resolve_variables(value, **variables)
-                    yml += value + "\n"
+                yml += self.make_value(value, indent, 3, variables)
 
         yml += "\nnetworks:\n"
         yml += indent + config["network-name"] + ": \n"
