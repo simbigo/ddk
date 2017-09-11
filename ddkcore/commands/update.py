@@ -21,7 +21,7 @@ class UpdateCommand(Command):
 
     def download(self, url, auth_user=None, auth_pass=None):
         request = urllib2.Request(url)
-        if auth_user is not None and auth_pass is not None:
+        if auth_user is not None and auth_pass is not None and auth_user != "" and auth_pass != "":
             base64string = base64.b64encode('%s:%s' % (auth_user, auth_pass))
             request.add_header("Authorization", "Basic %s" % base64string)
 
